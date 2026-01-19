@@ -48,12 +48,6 @@
                     Margin="5"
                     x:Name="ExportPDF"
                     Click="ExportPDF_Click" />
-            <Button Content="Drukuj"
-                    Height="30"
-                    Padding="10,0"
-                    Margin="5"
-                    x:Name="Print"
-                    Click="Print_Click" />
         </StackPanel>
 
         <StackPanel Grid.Row="2"

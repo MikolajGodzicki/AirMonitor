@@ -6,12 +6,18 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using OxyPlot.Wpf;
+using PdfSharp.Drawing;
+using PdfSharp.Fonts;
+using PdfSharp.Pdf;
 using System.Globalization;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace AirMonitor.Views {
     /// <summary>
@@ -141,12 +147,14 @@ namespace AirMonitor.Views {
             return $"{village} - {municipality}";
         }
 
-        private void CreateDataPlot(List<AirSample>? _airSamples) {
-            var plotModel = new PlotModel { Title = _location };
+        private PlotModel CreateDataPlot(List<AirSample>? _airSamples, string customCompound = "") {
+            string mappedCompound = customCompound == "" ? MapCompound(_selectedCompound) : MapCompound(customCompound);
+
+            var plotModel = new PlotModel { Title = $"{_location} - {mappedCompound}"  };
 
             ChemicalCompund compoundInfo = _airSamples
                 .SelectMany(s => s.Measurements)
-                .FirstOrDefault(m => m.ChemicalCompund.Name == MapCompound(_selectedCompound))?
+                .FirstOrDefault(m => m.ChemicalCompund.Name == mappedCompound)?
                 .ChemicalCompund;
 
             plotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Title = "Numer próbki" });
@@ -161,7 +169,7 @@ namespace AirMonitor.Views {
 
             double i = 0;
             foreach (AirSample sample in _airSamples) {
-                var measurement = sample.Measurements.FirstOrDefault(m => m.ChemicalCompund.Name == MapCompound(_selectedCompound));
+                var measurement = sample.Measurements.FirstOrDefault(m => m.ChemicalCompund.Name == mappedCompound);
                 if (measurement != null) {
                     double x = i;
                     double y = measurement.Value;
@@ -183,6 +191,8 @@ namespace AirMonitor.Views {
 
 
             DataPlot.Model = plotModel;
+
+            return plotModel;
         }
 
         private string MapCompound(string compound) {
@@ -212,11 +222,145 @@ namespace AirMonitor.Views {
         }
 
         private void ExportPDF_Click(object sender, RoutedEventArgs e) {
+            if (_airSamples is null || _airSamples.Count == 0) {
+                MessageBox.Show("Brak danych w pliku CSV.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
+            GlobalFontSettings.UseWindowsFontsUnderWindows = true;
+
+            var document = new PdfDocument();
+            var page = document.AddPage();
+            page.Size = PdfSharp.PageSize.A4;
+
+            XGraphics gfx = XGraphics.FromPdfPage(page);
+
+            double margin = 40;
+            double currentY = margin;
+
+            double availableWidth = page.Width - 2 * margin;
+            double availableHeight = page.Height - margin;
+
+            double spacing = 20;
+
+            // Tytuł
+            gfx.DrawString(
+                "Raport z wykrycia cząstek chemicznych w powietrzu",
+                new XFont("Arial", 18, XFontStyleEx.Bold),
+                XBrushes.Black,
+                new XRect(0, currentY, page.Width, 30),
+                XStringFormats.TopCenter);
+
+            currentY += 40;
+
+            // Metadane
+            var metaFont = new XFont("Arial", 10, XFontStyleEx.Regular);
+
+            gfx.DrawString($"Aplikacja: AirMonitor © - Mikołaj Godzicki", metaFont,
+                XBrushes.Black, margin, currentY);
+            currentY += 25;
+
+            gfx.DrawString($"Data utworzenia: {DateTime.Now:yyyy-MM-dd HH:mm}", metaFont,
+                XBrushes.Black, margin, currentY);
+            currentY += 20;
+
+            gfx.DrawString($"Osoba tworząca raport: Przemysław Polakiewicz", metaFont,
+                XBrushes.Black, margin, currentY);
+            currentY += 20;
+
+            gfx.DrawString($"Szerokość geograficzna: {_latitude}", metaFont,
+                XBrushes.Black, margin, currentY);
+            currentY += 15;
+
+            gfx.DrawString($"Długość geograficzna: {_longitude}", metaFont,
+                XBrushes.Black, margin, currentY);
+            currentY += 25;
+
+            // Adres
+            gfx.DrawString("Adres lokalizacji:", metaFont,
+                XBrushes.Black, margin, currentY);
+            currentY += 15;
+
+            // Ramka adresu
+            double addressHeight = 30;
+            gfx.DrawRectangle(
+                XPens.Black,
+                margin,
+                currentY,
+                page.Width - 2 * margin,
+                addressHeight);
+
+
+            currentY += addressHeight + 20;
+
+
+
+            List<PlotModel> plotModels = new() {
+                CreateDataPlot(_airSamples, "HCHO"),
+                CreateDataPlot(_airSamples, "HCL"),
+                CreateDataPlot(_airSamples, "H2S"),
+                CreateDataPlot(_airSamples, "NH3"),
+                CreateDataPlot(_airSamples, "PM1"),
+                CreateDataPlot(_airSamples, "PM2.5"),
+                CreateDataPlot(_airSamples, "PM10"),
+            };
+
+            foreach (var plotModel in plotModels) {
+                byte[] img = ExportPlotToPngBytes(plotModel);
+
+                using var ms = new MemoryStream(img);
+                using var image = XImage.FromStream(ms);
+
+                // zachowanie proporcji
+                double scale = availableWidth / image.PixelWidth;
+                double plotHeight = image.PixelHeight * scale;
+
+                // sprawdzenie czy się mieści
+                if (currentY + plotHeight > availableHeight) {
+                    gfx.Dispose();
+
+                    page = document.AddPage();
+                    page.Size = PdfSharp.PageSize.A4;
+                    gfx = XGraphics.FromPdfPage(page);
+
+                    currentY = margin;
+                }
+
+                gfx.DrawImage(
+                    image,
+                    margin,
+                    currentY,
+                    availableWidth,
+                    plotHeight
+                );
+
+
+                currentY += plotHeight + spacing;
+            }
+
+            gfx.Dispose();
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "PDF files (*.pdf)|*.pdf|All files (*.*)|*.*";
+            saveFileDialog.Title = "Zapisz raport jako PDF";
+            bool? result = saveFileDialog.ShowDialog();
+            if (result == true) {
+                string filePath = saveFileDialog.FileName;
+                document.Save(filePath);
+                MessageBox.Show("Plik PDF został zapisany pomyślnie.", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
-        private void Print_Click(object sender, RoutedEventArgs e) {
+        public byte[] ExportPlotToPngBytes(PlotModel model) {
+            using var stream = new MemoryStream();
 
+            var exporter = new PngExporter {
+                Width = 1200,
+                Height = 800
+            };
+
+            exporter.Export(model, stream);
+            return stream.ToArray();
         }
 
         private void RadioButton_Checked(object sender, RoutedEventArgs e) {
