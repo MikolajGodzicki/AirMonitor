@@ -24,12 +24,7 @@
         <Menu Grid.Row="0">
             <MenuItem Header="Program">
                 <MenuItem Header="Konfiguracja"
-                          Click="MenuItemConfiguration_Click"/>
-                <Separator />
-                <MenuItem Header="Wyjście" />
-            </MenuItem>
-            <MenuItem Header="Pomoc">
-                <MenuItem Header="O programie" />
+                          Click="MenuItemConfiguration_Click" />
             </MenuItem>
         </Menu>
 
@@ -134,7 +129,8 @@
                          Height="100"
                          GroupName="ChemicalCompound"
                          Margin="5"
-                         Checked="RadioButton_Checked" />
+                         Checked="RadioButton_Checked"
+                         x:Name="LastRadioButton"/>
         </StackPanel>
 
         <oxy:PlotView Grid.Row="4"

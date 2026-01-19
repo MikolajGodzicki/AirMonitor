@@ -339,6 +339,7 @@ namespace AirMonitor.Views {
             }
 
             gfx.Dispose();
+            LastRadioButton.IsChecked = true;
 
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "PDF files (*.pdf)|*.pdf|All files (*.*)|*.*";
