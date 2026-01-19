@@ -257,13 +257,13 @@ namespace AirMonitor.Views {
             // Metadane
             var metaFont = new XFont("Arial", 10, XFontStyleEx.Regular);
 
-            gfx.DrawString($"Aplikacja:                                 Mikołaj Godzicki", metaFont,
+            gfx.DrawString($"Raport stworzono z aplikacji:                                 Mikołaj Godzicki", metaFont,
                 XBrushes.Black, margin, currentY);
             using var logo = XImage.FromFile($"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\Assets\\logo.png");
             double logoWidth = 100; // szerokość logo
             double logoHeight = logoWidth * logo.PixelHeight / logo.PixelWidth;
 
-            gfx.DrawImage(logo, margin + 40, currentY - 20, logoWidth, logoHeight);
+            gfx.DrawImage(logo, margin + 125, currentY - 20, logoWidth, logoHeight);
             currentY += 25;
 
             gfx.DrawString($"Data utworzenia: {DateTime.Now:yyyy-MM-dd HH:mm}", metaFont,
