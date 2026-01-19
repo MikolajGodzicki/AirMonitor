@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -256,8 +257,13 @@ namespace AirMonitor.Views {
             // Metadane
             var metaFont = new XFont("Arial", 10, XFontStyleEx.Regular);
 
-            gfx.DrawString($"Aplikacja: AirMonitor © - Mikołaj Godzicki", metaFont,
+            gfx.DrawString($"Aplikacja:                                 Mikołaj Godzicki", metaFont,
                 XBrushes.Black, margin, currentY);
+            using var logo = XImage.FromFile($"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\Assets\\logo.png");
+            double logoWidth = 100; // szerokość logo
+            double logoHeight = logoWidth * logo.PixelHeight / logo.PixelWidth;
+
+            gfx.DrawImage(logo, margin + 40, currentY - 20, logoWidth, logoHeight);
             currentY += 25;
 
             gfx.DrawString($"Data utworzenia: {DateTime.Now:yyyy-MM-dd HH:mm}", metaFont,

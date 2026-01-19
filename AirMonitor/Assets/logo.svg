@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 160" width="1024" height="320" role="img" aria-label="AirMonitor logo">
+  <defs>
+    <style>
+      :root { --g:#23c552; --k:#0b0b0b; }
+      .k { fill: var(--k); }
+      .g { stroke: var(--g); }
+      .gfill { fill: var(--g); }
+      .stroke { stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .thin { stroke-width: 8; opacity: .95; }
+      text { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans"; font-weight: 650; letter-spacing: .5px; }
+    </style>
+  </defs>
+
+  <!-- Icon: hexagon "sensor" + dots -->
+  <g transform="translate(24,18)">
+    <path d="M64 8 L112 36 L112 92 L64 120 L16 92 L16 36 Z" class="stroke g"/>
+    <circle cx="64" cy="64" r="10" class="gfill"/>
+    <circle cx="42" cy="54" r="6" class="gfill"/>
+    <circle cx="92" cy="52" r="5.5" class="gfill"/>
+    <circle cx="86" cy="86" r="5" class="gfill"/>
+    <path d="M34 92 C52 82, 64 78, 94 70" class="stroke g thin"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(160,0)">
+    <text x="0" y="98" font-size="56" class="k">AirMonitor</text>
+    <text x="0" y="130" font-size="18" fill="#0b0b0b" opacity=".72">chemical particle detection</text>
+  </g>
+</svg>

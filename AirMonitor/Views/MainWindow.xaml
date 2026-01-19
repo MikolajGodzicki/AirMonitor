@@ -5,12 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AirMonitor.Views"
         xmlns:oxy="http://oxyplot.org/wpf"
+        xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
         mc:Ignorable="d"
         Height="900"
         Width="1400"
         MinWidth="1000"
         MinHeight="800"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/icon.ico"
+        Title="AirMonitor - Program do analizy danych z modułu wykrywającego cząstki chemiczne w powietrzu">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -28,9 +31,17 @@
             </MenuItem>
         </Menu>
 
-        <StackPanel Grid.Row="1"
+
+        <svgc:SvgViewbox Grid.Row="1"
+                            Width="250"
+                         Source="/Assets/logo.svg"
+                         Margin="10,10,50,0"
+                         HorizontalAlignment="Left"/>
+
+        <StackPanel Grid.Row="2"
                     Orientation="Horizontal"
                     Margin="10">
+
             <Button Content="Wczytaj dane (CSV)"
                     Height="30"
                     Padding="10,0"
@@ -45,7 +56,7 @@
                     Click="ExportPDF_Click" />
         </StackPanel>
 
-        <StackPanel Grid.Row="2"
+        <StackPanel Grid.Row="3"
                     Orientation="Horizontal"
                     Margin="10"
                     x:Name="ChemicalRadioPanel">

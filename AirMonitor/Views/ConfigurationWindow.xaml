@@ -6,9 +6,9 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:AirMonitor.Views"
         mc:Ignorable="d" Height="500" Width="600"
-        MinHeight="400"
-        MinWidth="400"
-        WindowStartupLocation="CenterOwner" ResizeMode="CanResize">
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Icon="/Assets/icon.ico"
+        Title="AirMonitor - Konfiguracja programu">
 
     <Grid>
         <StackPanel>
