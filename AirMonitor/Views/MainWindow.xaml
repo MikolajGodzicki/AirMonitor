@@ -1,0 +1,150 @@
+﻿<Window x:Class="AirMonitor.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AirMonitor.Views"
+        xmlns:oxy="http://oxyplot.org/wpf"
+        mc:Ignorable="d"
+        Height="900"
+        Width="1400"
+        MinWidth="1000"
+        MinHeight="800"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0">
+            <MenuItem Header="Program">
+                <MenuItem Header="Konfiguracja"
+                          Click="MenuItemConfiguration_Click"/>
+                <Separator />
+                <MenuItem Header="Wyjście" />
+            </MenuItem>
+            <MenuItem Header="Pomoc">
+                <MenuItem Header="O programie" />
+            </MenuItem>
+        </Menu>
+
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    Margin="10">
+            <Button Content="Wczytaj dane (CSV)"
+                    Height="30"
+                    Padding="10,0"
+                    Margin="5"
+                    x:Name="ImportData"
+                    Click="ImportData_Click" />
+            <Button Content="Eksportuj PDF"
+                    Height="30"
+                    Padding="10,0"
+                    Margin="5"
+                    x:Name="ExportPDF"
+                    Click="ExportPDF_Click" />
+            <Button Content="Drukuj"
+                    Height="30"
+                    Padding="10,0"
+                    Margin="5"
+                    x:Name="Print"
+                    Click="Print_Click" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    Margin="10"
+                    x:Name="ChemicalRadioPanel">
+            <StackPanel.Resources>
+                <Style TargetType="RadioButton">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="RadioButton">
+                                <Border Background="{TemplateBinding Background}"
+                                        BorderBrush="Gray"
+                                        BorderThickness="1"
+                                        CornerRadius="50"
+                                        Padding="10">
+                                    <ContentPresenter HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked"
+                                             Value="True">
+                                        <Setter Property="Background"
+                                                Value="DarkCyan" />
+                                        <Setter Property="Foreground"
+                                                Value="White" />
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver"
+                                             Value="True">
+                                        <Setter Property="Background"
+                                                Value="Teal" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Background"
+                            Value="LightGray" />
+                    <Setter Property="Foreground"
+                            Value="Black" />
+                    <Setter Property="Cursor"
+                            Value="Hand" />
+                </Style>
+            </StackPanel.Resources>
+            <RadioButton Content="HCHO"
+                         Width="100"
+                         Height="100"
+                         GroupName="ChemicalCompound"
+                         Margin="5"
+                         IsChecked="True"
+                         Checked="RadioButton_Checked" />
+            <RadioButton Content="HCL"
+                         Width="100"
+                         Height="100"
+                         GroupName="ChemicalCompound"
+                         Margin="5"
+                         Checked="RadioButton_Checked" />
+            <RadioButton Content="H2S"
+                         Width="100"
+                         Height="100"
+                         GroupName="ChemicalCompound"
+                         Margin="5"
+                         Checked="RadioButton_Checked" />
+            <RadioButton Content="NH3"
+                         Width="100"
+                         Height="100"
+                         GroupName="ChemicalCompound"
+                         Margin="5"
+                         Checked="RadioButton_Checked" />
+            <RadioButton Content="PM1"
+                         Width="100"
+                         Height="100"
+                         GroupName="ChemicalCompound"
+                         Margin="5"
+                         Checked="RadioButton_Checked" />
+            <RadioButton Content="PM2.5"
+                         Width="100"
+                         Height="100"
+                         GroupName="ChemicalCompound"
+                         Margin="5"
+                         Checked="RadioButton_Checked" />
+            <RadioButton Content="PM10"
+                         Width="100"
+                         Height="100"
+                         GroupName="ChemicalCompound"
+                         Margin="5"
+                         Checked="RadioButton_Checked" />
+        </StackPanel>
+
+        <oxy:PlotView Grid.Row="4"
+                      Margin="10" 
+                      x:Name="DataPlot"/>
+    </Grid>
+</Window>
