@@ -3,6 +3,7 @@ using AirMonitor.Models.Geolocalization;
 using CsvHelper;
 using Microsoft.Win32;
 using OxyPlot;
+using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using System.Globalization;
@@ -25,8 +26,16 @@ namespace AirMonitor.Views {
         private string _selectedCompound;
         List<AirSample>? _airSamples;
 
+        private Configuration configuration;
+
+        private List<ChemicalCompund> chemicalCompunds;
+
         public MainWindow() {
             InitializeComponent();
+            configuration = new Configuration();
+            configuration.Load();
+
+            chemicalCompunds = GetChemicalCompunds();
         }
 
         private async void ImportData_Click(object sender, RoutedEventArgs e) {
@@ -53,16 +62,22 @@ namespace AirMonitor.Views {
             }
         }
 
-        private List<AirSample> GetAirSamples() {
+        private List<ChemicalCompund> GetChemicalCompunds() {
             var compounds = new List<ChemicalCompund> {
-                    new ChemicalCompund { Name = "HCHO(ppm)", Unit = "ppm", Limit = 50 },
-                    new ChemicalCompund { Name = "HCL(ppm)", Unit = "ppm", Limit = 50 },
-                    new ChemicalCompund { Name = "H2S(ppm)", Unit = "ppm", Limit = 50 },
-                    new ChemicalCompund { Name = "NH3(ppm)", Unit = "ppm", Limit = 50 },
-                    new ChemicalCompund { Name = "PM1(ug/m3)", Unit = "µg/m³", Limit = 20 },
-                    new ChemicalCompund { Name = "PM2.5(ug/m3)", Unit = "µg/m³", Limit = 20 },
-                    new ChemicalCompund { Name = "PM10(ug/m3)", Unit = "µg/m³", Limit = 40 }
+                    new ChemicalCompund { Name = "HCHO(ppm)", Unit = "ppm", Limit = configuration.HCHO_Limit },
+                    new ChemicalCompund { Name = "HCL(ppm)", Unit = "ppm", Limit = configuration.HCL_Limit },
+                    new ChemicalCompund { Name = "H2S(ppm)", Unit = "ppm", Limit = configuration.H2S_Limit },
+                    new ChemicalCompund { Name = "NH3(ppm)", Unit = "ppm", Limit = configuration.NH3_Limit },
+                    new ChemicalCompund { Name = "PM1(ug/m3)", Unit = "µg/m³", Limit = configuration.PM1_Limit },
+                    new ChemicalCompund { Name = "PM2.5(ug/m3)", Unit = "µg/m³", Limit = configuration.PM2_5_Limit },
+                    new ChemicalCompund { Name = "PM10(ug/m3)", Unit = "µg/m³", Limit = configuration.PM10_Limit }
                 };
+            
+            return compounds;
+        }
+
+        private List<AirSample> GetAirSamples() {
+            var compounds = chemicalCompunds;
 
             using var reader = new StreamReader(_importedFilePath);
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
@@ -129,6 +144,11 @@ namespace AirMonitor.Views {
         private void CreateDataPlot(List<AirSample>? _airSamples) {
             var plotModel = new PlotModel { Title = _location };
 
+            ChemicalCompund compoundInfo = _airSamples
+                .SelectMany(s => s.Measurements)
+                .FirstOrDefault(m => m.ChemicalCompund.Name == MapCompound(_selectedCompound))?
+                .ChemicalCompund;
+
             plotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Title = "Numer próbki" });
             plotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Title = "Stężenie" });
 
@@ -151,6 +171,16 @@ namespace AirMonitor.Views {
             }
 
             plotModel.Series.Add(lineSeries);
+
+            var exceedanceRect = new RectangleAnnotation {
+                MinimumY = compoundInfo.Limit,           // dolna granica przekroczenia
+                MaximumY = 1000,         // górna granica, np. duża wartość
+                Fill = OxyColor.FromAColor(80, OxyColors.Red),
+                Layer = AnnotationLayer.BelowSeries
+            };
+
+            plotModel.Annotations.Add(exceedanceRect);
+
 
             DataPlot.Model = plotModel;
         }
@@ -176,6 +206,8 @@ namespace AirMonitor.Views {
             if (string.IsNullOrEmpty(_importedFilePath))
                 return;
 
+            chemicalCompunds = GetChemicalCompunds();
+            _airSamples = GetAirSamples();
             CreateDataPlot(_airSamples);
         }
 
@@ -192,8 +224,9 @@ namespace AirMonitor.Views {
         }
 
         private void MenuItemConfiguration_Click(object sender, RoutedEventArgs e) {
-            ConfigurationWindow confWindow = new ConfigurationWindow();
+            ConfigurationWindow confWindow = new ConfigurationWindow(configuration);
             confWindow.ShowDialog();
+            UpdateView();
         }
     }
 }

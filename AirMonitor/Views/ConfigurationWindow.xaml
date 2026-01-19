@@ -3,11 +3,114 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:AirMonitor.Views"
         mc:Ignorable="d" Height="500" Width="600"
+        MinHeight="400"
+        MinWidth="400"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResize">
 
     <Grid>
-        
+        <StackPanel>
+            <Label Content="Konfiguracja programu"
+                   FontSize="16"
+                   FontWeight="Bold"
+                   Margin="10" />
+            <Label Content="Ustawienia limitów związków chemicznych"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   Margin="10,20,10,10" />
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,5">
+                <Label Content="HCHO"
+                   FontSize="14"
+                   Margin="10,0,0,0"  />
+                <xctk:DoubleUpDown Increment="0.0001"
+                                   FormatString="F4"
+                                   Width="120"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   x:Name="HCHO_Limit" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,5">
+                <Label Content="HCL"
+                       FontSize="14"
+                       Margin="10,0,0,0" />
+                <xctk:DoubleUpDown Increment="0.0001"
+                                   FormatString="F4"
+                                   Width="120"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   x:Name="HCL_Limit" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,5">
+                <Label Content="H2S"
+                       FontSize="14"
+                       Margin="10,0,0,0" />
+                <xctk:DoubleUpDown Increment="0.0001"
+                                   FormatString="F4"
+                                   Width="120"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   x:Name="H2S_Limit" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,5">
+                <Label Content="NH3"
+                       FontSize="14"
+                       Margin="10,0,0,0" />
+                <xctk:DoubleUpDown Increment="0.0001"
+                                   FormatString="F4"
+                                   Width="120"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   x:Name="NH3_Limit" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,5">
+                <Label Content="PM1"
+                       FontSize="14"
+                       Margin="10,0,0,0" />
+                <xctk:DoubleUpDown Increment="0.0001"
+                                   FormatString="F4"
+                                   Width="120"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   x:Name="PM1_Limit" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,5">
+                <Label Content="PM2.5"
+                       FontSize="14"
+                       Margin="10,0,0,0" />
+                <xctk:DoubleUpDown Increment="0.0001"
+                                   FormatString="F4"
+                                   Width="120"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   x:Name="PM2_5_Limit" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,5">
+                <Label Content="PM10"
+                       FontSize="14"
+                       Margin="10,0,0,0" />
+                <xctk:DoubleUpDown Increment="0.0001"
+                                   FormatString="F4"
+                                   Width="120"
+                                   HorizontalAlignment="Left"
+                                   Margin="10,0,0,0"
+                                   x:Name="PM10_Limit" />
+            </StackPanel>
+
+            <Button Content="Zapisz ustawienia"
+                    Width="150"
+                    Height="35"
+                    Margin="10,20"
+                    HorizontalAlignment="Left"
+                    Click="SaveSettings_Click" />
+        </StackPanel>
     </Grid>
 </Window>
