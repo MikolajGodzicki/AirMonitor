@@ -32,6 +32,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace AirMonitor.Views {
@@ -55,8 +56,6 @@ namespace AirMonitor.Views {
 
         private List<ChemicalCompund> chemicalCompunds;
 
-        private byte[]? _mapImage;
-
         public MainWindow() {
             InitializeComponent();
             configuration = new Configuration();
@@ -66,6 +65,7 @@ namespace AirMonitor.Views {
         }
 
         private async void ImportData_Click(object sender, RoutedEventArgs e) {
+
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
             openFileDialog.Title = "Wybierz plik CSV";
@@ -353,7 +353,7 @@ namespace AirMonitor.Views {
             currentY += 20;
             gfx.DrawString($"Data pierwszego pomiaru: {_firstMeasurementDate:yyyy-MM-dd HH:mm:ss}", metaFont,
                 XBrushes.Black, margin, currentY);
-            currentY += 20; 
+            currentY += 20;
             gfx.DrawString($"Data ostatniego pomiaru: {_lastMeasurementDate:yyyy-MM-dd HH:mm:ss}", metaFont,
                 XBrushes.Black, margin, currentY);
             currentY += 20;
@@ -387,6 +387,19 @@ namespace AirMonitor.Views {
 
             currentY += addressHeight + 20;
 
+            MapControl.Visibility = System.Windows.Visibility.Visible;
+
+            var mapData = GetMapData();
+
+            using var msImg = new MemoryStream(mapData);
+            using var mapImage = XImage.FromStream(msImg);
+
+            double mapScale = availableWidth / mapImage.PixelWidth;
+            double mapHeight = mapImage.PixelHeight * mapScale;
+            gfx.DrawImage(mapImage, margin, currentY, availableWidth, mapHeight);
+            currentY += mapHeight + spacing;
+
+            MapControl.Visibility = System.Windows.Visibility.Hidden;
 
 
             List<PlotModel> plotModels = new() {
@@ -432,10 +445,6 @@ namespace AirMonitor.Views {
                 currentY += plotHeight + spacing;
             }
 
-            using var msimg = new MemoryStream(_mapImage);
-            using var mapImage = XImage.FromStream(msimg);
-            gfx.DrawImage(mapImage, margin, currentY, availableWidth, 800);
-
             gfx.Dispose();
             LastRadioButton.IsChecked = true;
 
@@ -447,6 +456,21 @@ namespace AirMonitor.Views {
                 string filePath = saveFileDialog.FileName;
                 document.Save(filePath);
                 MessageBox.Show("Plik PDF został zapisany pomyślnie.", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private byte[] GetMapData() {
+            var rtb = new RenderTargetBitmap(1200, 1100, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+            rtb.Render(MapControl);
+
+            // zapis do MemoryStream w PNG
+            byte[] mapBytes;
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(rtb));
+            using (var ms = new MemoryStream()) {
+                encoder.Save(ms);
+                mapBytes = ms.ToArray();
+                return mapBytes;
             }
         }
 
