@@ -240,7 +240,14 @@ namespace AirMonitor.Views {
                 .FirstOrDefault(m => m.ChemicalCompund.Name == mappedCompound)?
                 .ChemicalCompund;
 
-            plotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Title = "Numer próbki" });
+            plotModel.Axes.Add(new DateTimeAxis {
+                Position = AxisPosition.Bottom,
+                Title = "Czas pomiaru",
+                StringFormat = "HH:mm:ss",   // godziny:minuty:sekundy
+                IntervalType = DateTimeIntervalType.Seconds,
+                MajorGridlineStyle = OxyPlot.LineStyle.Solid,
+                MinorGridlineStyle = OxyPlot.LineStyle.Dot
+            });
             plotModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Title = "Stężenie" });
 
             var lineSeries = new LineSeries {
@@ -250,14 +257,12 @@ namespace AirMonitor.Views {
                 MarkerStroke = OxyColors.Yellow
             };
 
-            double i = 0;
             foreach (AirSample sample in _airSamples) {
                 var measurement = sample.Measurements.FirstOrDefault(m => m.ChemicalCompund.Name == mappedCompound);
                 if (measurement != null) {
-                    double x = i;
+                    double x = DateTimeAxis.ToDouble(sample.Timestamp);
                     double y = measurement.Value;
                     lineSeries.Points.Add(new DataPoint(x, y));
-                    i++;
                 }
             }
 
