@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:AirMonitor.Views"
         xmlns:oxy="http://oxyplot.org/wpf"
         xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+        xmlns:mapsui="clr-namespace:Mapsui.UI.Wpf;assembly=Mapsui.UI.Wpf"
         mc:Ignorable="d"
         Height="900"
         Width="1400"
@@ -54,6 +55,12 @@
                     Margin="5"
                     x:Name="ExportPDF"
                     Click="ExportPDF_Click" />
+            <Button Content="Podgląd Mapy"
+                    Height="30"
+                    Padding="10,0"
+                    Margin="5"
+                    x:Name="MapPreview"
+                    Click="MapPreview_Click" />
         </StackPanel>
 
         <StackPanel Grid.Row="3"
@@ -141,11 +148,13 @@
                          GroupName="ChemicalCompound"
                          Margin="5"
                          Checked="RadioButton_Checked"
-                         x:Name="LastRadioButton"/>
+                         x:Name="LastRadioButton" />
         </StackPanel>
-
+        
+        <mapsui:MapControl Grid.Row="4"  x:Name="MapControl" Visibility="Hidden" />
         <oxy:PlotView Grid.Row="4"
                       Margin="10" 
-                      x:Name="DataPlot"/>
+                      x:Name="DataPlot"
+                      Visibility="Visible"/>
     </Grid>
 </Window>

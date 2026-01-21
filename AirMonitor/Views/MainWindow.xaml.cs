@@ -1,7 +1,19 @@
 ﻿using AirMonitor.Models;
 using AirMonitor.Models.Geolocalization;
+using BruTile;
 using CsvHelper;
+using ExCSS;
+using Mapsui;
+using Mapsui.Features;
+using Mapsui.Layers;
+using Mapsui.Nts;
+using Mapsui.Projections;
+using Mapsui.Styles;
+using Mapsui.Tiling;
+using Mapsui.Utilities;
 using Microsoft.Win32;
+using NetTopologySuite.Geometries;
+using NetTopologySuite.Simplify;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
@@ -10,6 +22,7 @@ using OxyPlot.Wpf;
 using PdfSharp.Drawing;
 using PdfSharp.Fonts;
 using PdfSharp.Pdf;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Net;
@@ -19,6 +32,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace AirMonitor.Views {
     /// <summary>
@@ -26,16 +40,22 @@ namespace AirMonitor.Views {
     /// </summary>
     public partial class MainWindow : Window {
 
+        public record GeoPoint(double Latitude, double Longitude);
+
         private string _importedFilePath;
         private string _location;
         private double _latitude;
-        private double _longitude;
+        private double _longitude; 
+        private DateTime _firstMeasurementDate;
+        private DateTime _lastMeasurementDate;
         private string _selectedCompound;
         List<AirSample>? _airSamples;
 
         private Configuration configuration;
 
         private List<ChemicalCompund> chemicalCompunds;
+
+        private byte[]? _mapImage;
 
         public MainWindow() {
             InitializeComponent();
@@ -63,10 +83,72 @@ namespace AirMonitor.Views {
 
                 _latitude = _airSamples.First().Latitude;
                 _longitude = _airSamples.First().Longitude;
+                _firstMeasurementDate = _airSamples.First().Timestamp;
+                _lastMeasurementDate = _airSamples.Last().Timestamp;
                 _location = await GetLocation(_latitude, _longitude);
+
+                var coords = _airSamples
+                        .Select(s => new Coordinate(s.Longitude, s.Latitude))
+                        .ToArray();
+
+                CreateMap(coords);
 
                 UpdateView();
             }
+        }
+
+        private void CreateMap(Coordinate[] coords) {
+            var map = new Mapsui.Map();
+
+            // Warstwa OpenStreetMap
+            map.Layers.Add(OpenStreetMap.CreateTileLayer());
+
+            MapControl.Map = map;
+            var centerPoint = SphericalMercator.FromLonLat(_longitude, _latitude);
+
+            var sphericalMin = SphericalMercator.FromLonLat(new MPoint(coords.Min(c => c.X), coords.Min(c => c.Y)));
+            var sphericalMax = SphericalMercator.FromLonLat(new MPoint(coords.Max(c => c.X), coords.Max(c => c.Y)));
+
+            double width = sphericalMax.X - sphericalMin.X;
+            double height = sphericalMax.Y - sphericalMin.Y;
+            double margin = Math.Max(width, height) * 0.1;
+
+            var mrect = new MRect(
+                sphericalMin.X - margin,
+                sphericalMin.Y - margin,
+                sphericalMax.X + margin,
+                sphericalMax.Y + margin
+            );
+
+            // Ustawienie widoku przez Viewport
+            MapControl.Map.Navigator.CenterOn(centerPoint.x, centerPoint.y);
+            MapControl.Map.Navigator.ZoomToBox(mrect);
+            MapControl.Refresh();
+
+            var line = new LineString(coords);
+            var lineFeature = new GeometryFeature { Geometry = line };
+            lineFeature.Styles.Add(new VectorStyle { Line = new Mapsui.Styles.Pen(Mapsui.Styles.Color.Red, 3) });
+
+            var lineLayer = new MemoryLayer { Name = "Route", Features = new[] { lineFeature } };
+            MapControl.Map.Layers.Add(lineLayer);
+
+            // Punkty (przekroczenia czerwone, normalne niebieskie)
+            var pointFeatures = _airSamples.Select(s => {
+                var p = SphericalMercator.FromLonLat(s.Longitude, s.Latitude);
+                var f = new GeometryFeature { Geometry = new LineString([new Coordinate(p.x, p.y), new Coordinate(p.x, p.y)]) };
+                bool exceeded = s.Measurements.Any(m => m.IsExceeded);
+                f.Styles.Add(new SymbolStyle {
+                    SymbolType = SymbolType.Ellipse,
+                    Fill = new Mapsui.Styles.Brush(Mapsui.Styles.Color.Red),
+                    SymbolScale = 0.5
+                });
+                return f;
+            }).ToList();
+
+            var pointLayer = new MemoryLayer { Name = "Points", Features = pointFeatures };
+            MapControl.Map.Layers.Add(pointLayer);
+
+            MapControl.Refresh();
         }
 
         private List<ChemicalCompund> GetChemicalCompunds() {
@@ -269,6 +351,12 @@ namespace AirMonitor.Views {
             gfx.DrawString($"Data utworzenia: {DateTime.Now:yyyy-MM-dd HH:mm}", metaFont,
                 XBrushes.Black, margin, currentY);
             currentY += 20;
+            gfx.DrawString($"Data pierwszego pomiaru: {_firstMeasurementDate:yyyy-MM-dd HH:mm:ss}", metaFont,
+                XBrushes.Black, margin, currentY);
+            currentY += 20; 
+            gfx.DrawString($"Data ostatniego pomiaru: {_lastMeasurementDate:yyyy-MM-dd HH:mm:ss}", metaFont,
+                XBrushes.Black, margin, currentY);
+            currentY += 20;
 
             gfx.DrawString($"Osoba tworząca raport: Przemysław Polakiewicz", metaFont,
                 XBrushes.Black, margin, currentY);
@@ -344,6 +432,10 @@ namespace AirMonitor.Views {
                 currentY += plotHeight + spacing;
             }
 
+            using var msimg = new MemoryStream(_mapImage);
+            using var mapImage = XImage.FromStream(msimg);
+            gfx.DrawImage(mapImage, margin, currentY, availableWidth, 800);
+
             gfx.Dispose();
             LastRadioButton.IsChecked = true;
 
@@ -372,6 +464,16 @@ namespace AirMonitor.Views {
 
         private void RadioButton_Checked(object sender, RoutedEventArgs e) {
             UpdateView();
+
+            if (DataPlot is not null)
+                DataPlot.Visibility = System.Windows.Visibility.Visible;
+            if (MapControl is not null)
+                MapControl.Visibility = System.Windows.Visibility.Hidden;
+        }
+
+        private void MapPreview_Click(object sender, RoutedEventArgs e) {
+            DataPlot.Visibility = System.Windows.Visibility.Hidden;
+            MapControl.Visibility = System.Windows.Visibility.Visible;
         }
 
         private void MenuItemConfiguration_Click(object sender, RoutedEventArgs e) {
